@@ -3,9 +3,8 @@ import shutil
 from typing import List, Dict, TypedDict
 
 from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.chat_models import ChatOllama
+from langchain_community.vectorstores import Chroma  # <-- Changed from FAISS
+from langchain_ollama import OllamaEmbeddings, ChatOllama  # <-- Updated imports
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
@@ -14,7 +13,7 @@ from langgraph.graph import StateGraph, END
 
 # --- Configuration ---
 CONTEXT_DIR = "context"
-VECTORSTORE_PATH = "vectorstore_faiss"
+VECTORSTORE_PATH = "chroma_db"  # <-- Changed to a new directory for Chroma
 # Make sure you have an Ollama model pulled, e.g., "llama3" or "mistral"
 LOCAL_LLM_MODEL = "granite4:tiny-h" 
 
@@ -29,13 +28,17 @@ class AgentState(TypedDict):
 # --- 2. Setup the RAG Pipeline (Vector Store) ---
 def setup_vector_store(force_rebuild: bool = False):
     """
-    Creates or loads a FAISS vector store from PDFs in the CONTEXT_DIR.
+    Creates or loads a ChromaDB vector store from PDFs in the CONTEXT_DIR.
     """
     print("Initializing vector store...")
+    embeddings = OllamaEmbeddings(model=LOCAL_LLM_MODEL) # Define embeddings once
+
     if os.path.exists(VECTORSTORE_PATH) and not force_rebuild:
         print(f"Loading existing vector store from {VECTORSTORE_PATH}...")
-        embeddings = OllamaEmbeddings(model=LOCAL_LLM_MODEL)
-        vector_store = FAISS.load_local(VECTORSTORE_PATH, embeddings, allow_dangerous_deserialization=True)
+        vector_store = Chroma(
+            persist_directory=VECTORSTORE_PATH, 
+            embedding_function=embeddings
+        )
         return vector_store.as_retriever()
     
     print(f"Creating new vector store. Rebuilding={force_rebuild}")
@@ -65,12 +68,14 @@ def setup_vector_store(force_rebuild: bool = False):
     print(f"Split documents into {len(splits)} chunks.")
 
     # Create embeddings and vector store
-    embeddings = OllamaEmbeddings(model=LOCAL_LLM_MODEL)
-    print("Creating FAISS vector store... (this may take a moment)")
-    vector_store = FAISS.from_documents(splits, embeddings)
+    print("Creating ChromaDB vector store... (this may take a moment)")
+    # Chroma.from_documents automatically handles persistence
+    vector_store = Chroma.from_documents(
+        documents=splits, 
+        embedding=embeddings,
+        persist_directory=VECTORSTORE_PATH
+    )
     
-    # Save the vector store locally
-    vector_store.save_local(VECTORSTORE_PATH)
     print(f"Vector store saved to {VECTORSTORE_PATH}.")
     
     return vector_store.as_retriever()
@@ -147,7 +152,7 @@ Overall Tone & Style:
     )
 
     # Initialize the Ollama model
-    llm = ChatOllama(model=LOCAL_LLM_MODEL, temperature=0)
+    llm = ChatOllama(model=LOCAL_LLM_MODEL, temperature=0) # <-- This now uses the correct import
     
     # Chain the prompt, LLM, and output parser
     rag_chain = prompt | llm | StrOutputParser()

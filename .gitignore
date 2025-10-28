@@ -1,7 +1,8 @@
 # Different Databse testing files
-app-faiss.py
-app-chromadb.py
-pip-requirements.txt
+database-tests/*
+
+# Database
+chroma_db/*
 
 # Ignore all files in context folder
 context/*
