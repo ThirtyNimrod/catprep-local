@@ -1,0 +1,5 @@
+# Ignore all files in context folder
+context/*
+
+# But keep ReadMe.md in context folder
+!context/ReadMe.md
