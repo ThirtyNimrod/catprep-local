@@ -499,11 +499,7 @@ study_plan_graph.add_node("retrieve", study_plan_retrieve)
 study_plan_graph.add_node("generate", study_plan_generate)
 study_plan_graph.set_entry_point("retrieve")
 study_plan_graph.add_edge("retrieve", "generate")
-study_plan_graph.add_conditional_edges(
-    "generate",
-    study_plan_check_exit,
-    {"continue": "retrieve", "exit": END}
-)
+study_plan_graph.add_edge("generate", END)  # Always end after generation
 study_plan_app = study_plan_graph.compile()
 
 # Practice Questions Graph
@@ -512,11 +508,7 @@ practice_graph.add_node("retrieve", practice_retrieve)
 practice_graph.add_node("generate", practice_generate)
 practice_graph.set_entry_point("retrieve")
 practice_graph.add_edge("retrieve", "generate")
-practice_graph.add_conditional_edges(
-    "generate",
-    practice_check_exit,
-    {"continue": "retrieve", "exit": END}
-)
+practice_graph.add_edge("generate", END)  # Always end after generation
 practice_app = practice_graph.compile()
 
 # Feedback Graph
@@ -525,11 +517,7 @@ feedback_graph.add_node("retrieve", feedback_retrieve)
 feedback_graph.add_node("generate", feedback_generate)
 feedback_graph.set_entry_point("retrieve")
 feedback_graph.add_edge("retrieve", "generate")
-feedback_graph.add_conditional_edges(
-    "generate",
-    feedback_check_exit,
-    {"continue": "retrieve", "exit": END}
-)
+feedback_graph.add_edge("generate", END)  # Always end after generation
 feedback_app = feedback_graph.compile()
 
 # ============================================================
@@ -610,7 +598,6 @@ if __name__ == "__main__":
                         "timeframe": None,
                         "should_exit": False
                     }
-                    result = study_plan_app.invoke(agent_state)
                 
                 elif current_agent == "practice":
                     print("\n✏️  Entering Practice Questions Agent...")
@@ -625,7 +612,6 @@ if __name__ == "__main__":
                         "timeframe": None,
                         "should_exit": False
                     }
-                    result = practice_app.invoke(agent_state)
                 
                 elif current_agent == "feedback":
                     print("\n📊 Entering Feedback Agent...")
@@ -638,42 +624,26 @@ if __name__ == "__main__":
                         "weak_areas": [],
                         "should_exit": False
                     }
-                    result = feedback_app.invoke(agent_state)
-                
-                # Update state and display response
-                agent_state = result
-                print("\n" + "=" * 60)
-                print(result["generation"])
-                print("=" * 60)
-                
-                # Check if agent wants to exit immediately
-                if result.get("should_exit", False):
-                    print(f"\n✅ Exiting {current_agent} agent.")
-                    current_agent = None
-                    agent_state = None
             
-            else:
-                # Continue conversation with current agent
-                agent_state["question"] = user_input
-                agent_state["should_exit"] = False
-                
-                if current_agent == "study_plan":
-                    result = study_plan_app.invoke(agent_state)
-                elif current_agent == "practice":
-                    result = practice_app.invoke(agent_state)
-                elif current_agent == "feedback":
-                    result = feedback_app.invoke(agent_state)
-                
-                agent_state = result
-                print("\n" + "=" * 60)
-                print(result["generation"])
-                print("=" * 60)
-                
-                # Check exit condition
-                if result.get("should_exit", False):
-                    print(f"\n✅ Exiting {current_agent} agent. Back to main menu.")
-                    current_agent = None
-                    agent_state = None
+            # Process with current agent (whether just initialized or continuing)
+            if current_agent == "study_plan":
+                result = study_plan_app.invoke(agent_state)
+            elif current_agent == "practice":
+                result = practice_app.invoke(agent_state)
+            elif current_agent == "feedback":
+                result = feedback_app.invoke(agent_state)
+            
+            # Update state and display response
+            agent_state = result
+            print("\n" + "=" * 60)
+            print(result["generation"])
+            print("=" * 60)
+            
+            # Check if user wants to exit
+            if result.get("should_exit", False):
+                print(f"\n✅ Exiting {current_agent} agent. Back to main menu.")
+                current_agent = None
+                agent_state = None
         
         except KeyboardInterrupt:
             print("\n\n👋 Goodbye!")
