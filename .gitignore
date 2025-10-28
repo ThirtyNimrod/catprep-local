@@ -1,5 +1,7 @@
 # Different Databse testing files
 database-tests/*
+app-gemini.py
+app-claude.py
 
 # Database
 chroma_db/*
