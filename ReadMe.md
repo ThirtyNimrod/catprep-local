@@ -26,7 +26,7 @@ A comprehensive CAT (Common Admission Test) preparation assistant powered by loc
 ### 1. Document Loading & Indexing
 - Scans the `context` folder for CAT prep materials (PDFs)
 - Chunks documents into 800-token segments (optimized for 4B models)
-- Stores in ChromaDB vector store with semantic search capability
+- Stores in FAISS vector store with semantic search capability
 - Only rebuilds when forced or on first run
 
 ### 2. Query Routing Flow
@@ -91,15 +91,19 @@ ollama pull mistral:7b       # 7B alternative
 ### 2. Install Python Dependencies
 
 ```bash
-pip install langgraph langchain langchain_community langchain_ollama chromadb pypdf
+python -m venv venv
+venv\Scripts\activate
+pip install uv
+uv pip install -r pyproject.toml
 ```
 
 **Package purposes:**
 - `langgraph`: Multi-agent orchestration framework
 - `langchain` & `langchain_community`: Document loaders, embeddings, prompts
 - `langchain_ollama`: Ollama integration for LangChain
-- `chromadb`: Vector database for semantic search
+- `faiss-cpu`: Vector database for semantic search
 - `pypdf`: PDF document parsing
+- `nicegui`: Frontend web interface framework
 
 ### 3. Prepare Your Documents
 
@@ -120,7 +124,7 @@ mkdir context
 
 ### 4. Configure the Model (Optional)
 
-Edit `app.py` line 13:
+Edit `core/config.py`:
 ```python
 LOCAL_LLM_MODEL = "granite4:tiny-h"  # Change to your preferred model
 ```
@@ -128,12 +132,13 @@ LOCAL_LLM_MODEL = "granite4:tiny-h"  # Change to your preferred model
 ### 5. Run the System
 
 ```bash
-python app.py
+python main_ui.py
 ```
 
 **First Run:**
 - Indexes all PDFs in `context/` folder
-- Creates ChromaDB vector store
+- Creates FAISS vector store
+- Launches a web interface locally
 - May take 1-5 minutes depending on document size
 
 **Subsequent Runs:**
@@ -219,28 +224,28 @@ Assistant: [Current - kept in memory for reference]
 ## 🎨 Customization
 
 ### Modify Prompts
-Edit the prompt templates in `app.py`:
-- `ROUTER_PROMPT` (line ~80)
-- `STUDY_PLAN_PROMPT` (line ~90)
-- `PRACTICE_QUESTIONS_PROMPT` (line ~110)
-- `FEEDBACK_PROMPT` (line ~150)
+Edit the prompt templates in `agents/prompts.py`:
+- `ROUTER_PROMPT`
+- `STUDY_PLAN_PROMPT`
+- `PRACTICE_QUESTIONS_PROMPT`
+- `FEEDBACK_PROMPT`
 
 ### Adjust Retrieval
 ```python
-# Line ~370 - Change number of documents retrieved
-documents = vector_store.similarity_search(question, k=5)  # Increase k for more context
+# In agents/specialists/*.py - Change number of documents retrieved
+documents = retrieve_documents(question, k=5)  # Increase k for more context
 ```
 
 ### Modify Memory Limits
 ```python
-# Line ~245 - Adjust conversation history depth
+# In core/utils.py - Adjust conversation history depth
 def format_conversation_history(history, max_turns: int = 3):  # Change max_turns
 ```
 
 ### Change Exit Keywords
 ```python
-# Line ~237 - Add custom exit phrases
-exit_keywords = ["bye", "exit", "quit", "thanks", "thank you", "done", "finish"]
+# In core/utils.py - Add custom exit phrases
+exit_keywords = ["bye", "exit", "quit", "thanks", "thank you", "done", "cancel"]
 ```
 
 ## 🐛 Troubleshooting
@@ -401,7 +406,8 @@ Built with:
 - [Ollama](https://ollama.ai) - Local LLM runtime
 - [LangChain](https://langchain.com) - LLM application framework
 - [LangGraph](https://langchain-ai.github.io/langgraph/) - Agent orchestration
-- [ChromaDB](https://www.trychroma.com/) - Vector database
+- [FAISS](https://github.com/facebookresearch/faiss) - Vector database
+- [NiceGUI](https://nicegui.io/) - Web UI Framework
 
 ---
 

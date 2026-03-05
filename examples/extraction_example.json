@@ -1,0 +1,41 @@
+{
+    "entities": [
+        {
+            "id": "topic_qa",
+            "type": "Topic",
+            "name": "Quantitative Aptitude"
+        },
+        {
+            "id": "topic_mixtures",
+            "type": "Topic",
+            "name": "Mixtures and Alligations"
+        },
+        {
+            "id": "formula_alligation",
+            "type": "Formula",
+            "name": "Alligation Rule (Ratio of Mixtures)"
+        },
+        {
+            "id": "q_1801_1",
+            "type": "Question",
+            "name": "What quantity of water should be mixed with 12 litres of 88% milk solution to obtain a 48% milk solution?"
+        }
+    ],
+    "relationships": [
+        {
+            "from": "topic_mixtures",
+            "to": "topic_qa",
+            "type": "sub_topic_of"
+        },
+        {
+            "from": "q_1801_1",
+            "to": "topic_mixtures",
+            "type": "requires_knowledge_of"
+        },
+        {
+            "from": "q_1801_1",
+            "to": "formula_alligation",
+            "type": "solved_using"
+        }
+    ]
+}

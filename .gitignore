@@ -1,3 +1,11 @@
+# Virtual Environment
+venv/
+.venv/
+myenv/
+
+# Environment variables
+.env
+
 # Different Databse testing files
 database-tests/*
 app-gemini.py
@@ -11,3 +19,9 @@ context/*
 
 # But keep ReadMe.md in context folder
 !context/ReadMe.md
+
+# Ignore all __pycache__ folders
+__pycache__/
+
+# AntiGravity
+.antigravity/

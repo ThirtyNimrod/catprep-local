@@ -1,0 +1,28 @@
+# Instructions for installing all python dependencies
+# 1. Create a virtual environment: python -m venv venv
+# 2. Activate the virtual environment: venv\Scripts\activate
+# 3. Install `uv` globally: pip install uv
+# 4. Install all dependencies: uv pip install -r pyproject.toml
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "catprep-local"
+version = "0.1.0"
+description = "Multi-Agent CAT Prep System with Ollama & LangGraph"
+readme = "ReadMe.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langgraph==1.0.1",
+    "langchain==1.0.2",
+    "langchain_community==0.4",
+    "langchain-core==1.0.1",
+    "faiss-cpu==1.12.0",
+    "pypdf==6.1.3",
+    "ollama==0.6.0",
+    "typing_extensions==4.15.0",
+    "langchain-text-splitters>=1.0.0",
+    "nicegui"
+]
