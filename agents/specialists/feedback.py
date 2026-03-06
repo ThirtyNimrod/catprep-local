@@ -3,13 +3,16 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage
 from core.state import AgentState
 from core.llm import get_llm
-from core.vector_store import retrieve_documents
+from core.knowledge_graph import retrieve_graph_context
 from core.utils import check_exit_intent, format_conversation_history
 from agents.prompts import FEEDBACK_PROMPT
+from core.logger import get_logger
+
+logger = get_logger("feedback")
 
 def feedback_node(state: AgentState):
     """Generate feedback and analysis"""
-    print("---FEEDBACK AGENT---")
+    logger.info("---FEEDBACK AGENT---")
     messages = state.get("messages", [])
     if not messages:
         return {}
@@ -21,10 +24,11 @@ def feedback_node(state: AgentState):
         
     weak_areas = state.get("weak_areas", [])
     search_query = f"{' '.join(weak_areas)} {question}" if weak_areas else question
-    documents = retrieve_documents(search_query, k=4)
-    
+
     mock_analysis = state.get("mock_test_analysis", "No mock test analyzed yet.")
-    context_str = "\n\n---\n\n".join(documents) if documents else "No context available."
+    graph_context = retrieve_graph_context(search_query, max_seed_nodes=10, max_triples=30)
+    context_str = graph_context if graph_context else "No context available."
+
     history_str = format_conversation_history(messages, max_turns=3)
     weak_areas_str = ", ".join(weak_areas) if weak_areas else "Not yet identified."
     
@@ -53,7 +57,7 @@ def feedback_node(state: AgentState):
         
     return {
         "messages": [AIMessage(content=generation)],
-        "documents": documents,
+        "documents": [],
         "weak_areas": new_weak_areas,
         "mock_test_analysis": new_mock_analysis
     }

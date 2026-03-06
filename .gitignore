@@ -6,13 +6,20 @@ myenv/
 # Environment variables
 .env
 
+# Logs
+logs/*
+
 # Different Databse testing files
 database-tests/*
 app-gemini.py
 app-claude.py
 
-# Database
+# Database / Generated artifacts
 chroma_db/*
+faiss_db/*
+data/*
+!data/.gitkeep
+context.bkp/*
 
 # Ignore all files in context folder
 context/*

@@ -3,13 +3,16 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import AIMessage
 from core.state import AgentState
 from core.llm import get_llm
-from core.vector_store import retrieve_documents
+from core.knowledge_graph import retrieve_graph_context
 from core.utils import check_exit_intent, format_conversation_history
 from agents.prompts import STUDY_PLAN_PROMPT
+from core.logger import get_logger
+
+logger = get_logger("study_plan")
 
 def study_plan_node(state: AgentState):
     """Generate study plan response"""
-    print("---STUDY PLAN AGENT---")
+    logger.info("---STUDY PLAN AGENT---")
     messages = state.get("messages", [])
     if not messages:
         return {}
@@ -19,8 +22,8 @@ def study_plan_node(state: AgentState):
     if check_exit_intent(question):
         return {"active_agent": "end"}
 
-    documents = retrieve_documents(question, k=3)
-    context_str = "\n\n---\n\n".join(documents) if documents else "No specific context available."
+    graph_context = retrieve_graph_context(question, max_seed_nodes=8, max_triples=20)
+    context_str = graph_context if graph_context else "No specific context available."
     history_str = format_conversation_history(messages)
     
     llm = get_llm(temperature=0.3)
@@ -38,5 +41,5 @@ def study_plan_node(state: AgentState):
     
     return {
         "messages": [AIMessage(content=generation)],
-        "documents": documents
+        "documents": [],
     }

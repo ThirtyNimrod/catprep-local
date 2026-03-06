@@ -3,10 +3,13 @@ from langchain_core.output_parsers import StrOutputParser
 from core.state import AgentState
 from core.llm import get_llm
 from agents.prompts import ROUTER_PROMPT
+from core.logger import get_logger
+
+logger = get_logger("router")
 
 def router_node(state: AgentState):
     """Determines which specialist agent should handle the query"""
-    print("---ROUTER AGENT---")
+    logger.info("---ROUTER AGENT---")
     messages = state.get("messages", [])
     if not messages:
         return {"active_agent": "unknown"}
@@ -18,7 +21,7 @@ def router_node(state: AgentState):
     chain = prompt | llm | StrOutputParser()
     
     result = chain.invoke({"question": question}).strip().lower()
-    print(f"Routing to: {result}")
+    logger.info(f"Routing to: {result}")
     
     valid_routes = ["study_plan", "practice", "feedback", "unknown"]
     next_agent = result if result in valid_routes else "unknown"

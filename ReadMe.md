@@ -23,11 +23,11 @@ A comprehensive CAT (Common Admission Test) preparation assistant powered by loc
 
 ## 🏗️ How It Works
 
-### 1. Document Loading & Indexing
-- Scans the `context` folder for CAT prep materials (PDFs)
-- Chunks documents into 800-token segments (optimized for 4B models)
-- Stores in FAISS vector store with semantic search capability
-- Only rebuilds when forced or on first run
+### 1. Document Loading & Knowledge Graph Extraction
+- Scans `context/` folder for CAT prep PDFs
+- Chunks documents into text segments
+- `scripts/build_knowledge_graph.py` builds an entity-relationship graph using LLM extraction
+- Resulting `.graphml` file stored in `data/` for rapid inference retrieval
 
 ### 2. Query Routing Flow
 ```
@@ -101,20 +101,23 @@ uv pip install -r pyproject.toml
 - `langgraph`: Multi-agent orchestration framework
 - `langchain` & `langchain_community`: Document loaders, embeddings, prompts
 - `langchain_ollama`: Ollama integration for LangChain
-- `faiss-cpu`: Vector database for semantic search
+- `networkx`: Network graph data structure for context retrieval
 - `pypdf`: PDF document parsing
 - `nicegui`: Frontend web interface framework
 
 ### 3. Prepare Your Documents
 
 ```bash
-# Create context folder
-mkdir context
+# Create directories
+mkdir context data logs
 
-# Add your CAT prep materials
+# Add your CAT prep materials to context/
 # - Previous year question papers (PDFs)
 # - Study materials
 # - Mock test questions
+
+# Build Knowledge Graph (Required First Step)
+python scripts/build_knowledge_graph.py
 ```
 
 **Document Tips:**
@@ -132,18 +135,16 @@ LOCAL_LLM_MODEL = "granite4:tiny-h"  # Change to your preferred model
 ### 5. Run the System
 
 ```bash
-python main_ui.py
+python main.py
 ```
 
-**First Run:**
-- Indexes all PDFs in `context/` folder
-- Creates FAISS vector store
-- Launches a web interface locally
-- May take 1-5 minutes depending on document size
+- Launches the **NiceGUI** web interface at `http://localhost:8080`
+- Instantly loads the knowledge graph from `data/knowledge_graph.graphml`
+- **Note:** The UI can start without Ollama running, but Ollama must be active when sending queries.
 
-**Subsequent Runs:**
-- Loads existing vector store instantly
-- Ready in seconds
+### 6. Logs & Debugging
+- Main application logs: `logs/app.log`
+- Graph builder logs: `logs/build_knowledge_graph.log`
 
 ## 💬 Usage Examples
 
@@ -250,9 +251,9 @@ exit_keywords = ["bye", "exit", "quit", "thanks", "thank you", "done", "cancel"]
 
 ## 🐛 Troubleshooting
 
-### "Failed to initialize vector store"
-- **Cause**: No PDFs in `context/` folder
-- **Solution**: Add PDF files and restart
+### "Knowledge graph not found"
+- **Cause**: Graph builder script hasn't been run
+- **Solution**: Run `python scripts/build_knowledge_graph.py` to populate `data/`
 
 ### "Ollama connection error"
 - **Cause**: Ollama service not running
@@ -406,7 +407,7 @@ Built with:
 - [Ollama](https://ollama.ai) - Local LLM runtime
 - [LangChain](https://langchain.com) - LLM application framework
 - [LangGraph](https://langchain-ai.github.io/langgraph/) - Agent orchestration
-- [FAISS](https://github.com/facebookresearch/faiss) - Vector database
+- [NetworkX](https://networkx.org/) - Knowledge Graph structure
 - [NiceGUI](https://nicegui.io/) - Web UI Framework
 
 ---

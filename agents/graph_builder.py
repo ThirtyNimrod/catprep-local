@@ -2,6 +2,9 @@ import json
 import networkx as nx
 import matplotlib.pyplot as plt
 import os
+from core.logger import get_logger
+
+logger = get_logger("graph_builder")
 
 def build_knowledge_graph(json_file_path, output_image="graph.png"):
     """
@@ -9,7 +12,7 @@ def build_knowledge_graph(json_file_path, output_image="graph.png"):
     and builds a Knowledge Graph using NetworkX.
     """
     if not os.path.exists(json_file_path):
-        print(f"File not found: {json_file_path}")
+        logger.error(f"File not found: {json_file_path}")
         return
         
     with open(json_file_path, 'r', encoding='utf-8') as f:
@@ -18,19 +21,19 @@ def build_knowledge_graph(json_file_path, output_image="graph.png"):
     G = nx.DiGraph()
     
     # Add Entities (Nodes)
-    print("Adding Entities...")
+    logger.info("Adding Entities...")
     for entity in data.get('entities', []):
         G.add_node(entity['id'], label=entity['name'], type=entity['type'])
         
     # Add Relationships (Edges)
-    print("Adding Relationships...")
+    logger.info("Adding Relationships...")
     for rel in data.get('relationships', []):
         if G.has_node(rel['from']) and G.has_node(rel['to']):
             G.add_edge(rel['from'], rel['to'], relation=rel['type'])
         else:
-            print(f"Warning: Missing node(s) for relationship {rel['from']} -> {rel['to']}")
+            logger.warning(f"Missing node(s) for relationship {rel['from']} -> {rel['to']}")
 
-    print(f"Graph built successfully with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges.")
+    logger.info(f"Graph built successfully with {G.number_of_nodes()} nodes and {G.number_of_edges()} edges.")
     
     # Visualize the Graph
     plt.figure(figsize=(10, 8))
@@ -58,7 +61,7 @@ def build_knowledge_graph(json_file_path, output_image="graph.png"):
     
     plt.title("CAT Prep Knowledge Graph Fragment")
     plt.savefig(output_image)
-    print(f"Saved graph visualization to {output_image}")
+    logger.info(f"Saved graph visualization to {output_image}")
     return G
 
 if __name__ == "__main__":
