@@ -9,6 +9,7 @@ class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], add_messages]
     active_agent: str
     documents: List[str]
+    active_graph_context: List[tuple]
     timeframe: Optional[str]
     current_questions: str
     previous_summary: str

@@ -29,6 +29,7 @@ context/*
 
 # Ignore all __pycache__ folders
 __pycache__/
+*.pyc
 
 # AntiGravity
 .antigravity/

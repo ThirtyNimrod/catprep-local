@@ -22,7 +22,7 @@ def study_plan_node(state: AgentState):
     if check_exit_intent(question):
         return {"active_agent": "end"}
 
-    graph_context = retrieve_graph_context(question, max_seed_nodes=8, max_triples=20)
+    graph_context, raw_triples = retrieve_graph_context(question, max_seed_nodes=8, max_triples=20)
     context_str = graph_context if graph_context else "No specific context available."
     history_str = format_conversation_history(messages)
     
@@ -42,4 +42,5 @@ def study_plan_node(state: AgentState):
     return {
         "messages": [AIMessage(content=generation)],
         "documents": [],
+        "active_graph_context": raw_triples
     }

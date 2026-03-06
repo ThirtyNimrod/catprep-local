@@ -106,14 +106,16 @@ def _triples_from_node(G: nx.DiGraph, node: str, hops: int = 2) -> list[tuple]:
             # Outgoing edges
             for _, tgt, data in G.out_edges(n, data=True):
                 rel = data.get("relation", "related_to")
-                triples.append((n, rel, tgt))
+                text = data.get("source_text", "")
+                triples.append((n, rel, tgt, text))
                 if tgt not in visited_nodes:
                     next_frontier.add(tgt)
                     visited_nodes.add(tgt)
             # Incoming edges (reverse direction)
             for src, _, data in G.in_edges(n, data=True):
                 rel = data.get("relation", "related_to")
-                triples.append((src, rel, n))
+                text = data.get("source_text", "")
+                triples.append((src, rel, n, text))
                 if src not in visited_nodes:
                     next_frontier.add(src)
                     visited_nodes.add(src)
@@ -133,9 +135,10 @@ def retrieve_graph_context(
     max_seed_nodes: int = 8,
     max_triples: int = 25,
     hops: int = 2,
-) -> str:
+) -> tuple[str, list[tuple]]:
     """
-    Return a formatted string of knowledge-graph triples relevant to `query`.
+    Return a formatted string of knowledge-graph triples relevant to `query`,
+    along with the raw list of triples for UI visualization.
 
     Parameters
     ----------
@@ -146,47 +149,69 @@ def retrieve_graph_context(
 
     Returns
     -------
-    A multi-line string of triples, or an empty string if the graph is
-    unavailable or no relevant nodes are found.
+    A tuple (context_string, raw_triples).
     """
     G = _load_graph()
     if G is None:
-        return ""
+        return "", []
 
     keywords = _extract_keywords(query)
-    if not keywords:
-        return ""
+    seed_nodes = []
 
-    # Find seed nodes that match any keyword
-    seed_nodes = [
-        n for n in G.nodes()
-        if _node_matches_keyword(str(n), keywords)
-    ][:max_seed_nodes]
+    if keywords:
+        # Find seed nodes whose labels match any keyword
+        for node in G.nodes:
+            label = G.nodes[node].get("label", node)
+            if _node_matches_keyword(str(label), keywords):
+                seed_nodes.append(node)
+            if len(seed_nodes) >= max_seed_nodes:
+                break
+
+    # FALLBACK: If query is generic (no keywords matched), pick central nodes
+    if not seed_nodes:
+        logger.debug(f"No graph nodes matched query: '{query}'. Falling back to central nodes.")
+        try:
+            deg_cent = nx.degree_centrality(G)
+            sorted_nodes = sorted(deg_cent.items(), key=lambda x: x[1], reverse=True)
+            seed_nodes = [node for node, _ in sorted_nodes[:max_seed_nodes]]
+        except Exception as e:
+            logger.error(f"Fallback centrality failed: {e}")
+            seed_nodes = list(G.nodes)[:max_seed_nodes]
 
     if not seed_nodes:
-        logger.debug(f"No graph nodes matched keywords: {keywords}")
-        return ""
+        return "", []
 
-    logger.debug(f"Graph seeds for '{query[:60]}': {seed_nodes[:5]} ...")
+    # Collect triples via BFS from each seed
+    all_triples: list[tuple] = []   # UI triplets: (src, rel, tgt)
+    seen_triples: set[tuple] = set()
+    source_texts: set[str] = set()  # Raw text snippets attached to edges
 
-    # Collect triples, de-duplicate while preserving order
-    seen = set()
-    all_triples: list[tuple] = []
-    for seed in seed_nodes:
-        for triple in _triples_from_node(G, seed, hops=hops):
-            if triple not in seen:
-                seen.add(triple)
-                all_triples.append(triple)
+    for node in seed_nodes:
+        for src, rel, tgt, text in _triples_from_node(G, node, hops=hops):
+            trip = (src, rel, tgt)
+            if trip not in seen_triples:
+                seen_triples.add(trip)
+                all_triples.append(trip)
+            
+            if text and len(text) > 20: # skip empty/tiny texts
+                source_texts.add(text)
+                
             if len(all_triples) >= max_triples:
                 break
         if len(all_triples) >= max_triples:
             break
 
     if not all_triples:
-        return ""
+        return "", []
 
-    lines = ["[Knowledge Graph Context]"]
+    lines = ["[Knowledge Graph Extracted Relations]"]
     for src, rel, tgt in all_triples:
         lines.append(f"  {src} --[{rel}]--> {tgt}")
 
-    return "\n".join(lines)
+    if source_texts:
+        lines.append("\n[Original Source Text Snippets]")
+        # Limit snippets to avoid blowing up context window
+        for text in list(source_texts)[:5]:
+            lines.append(f"---\n{text.strip()}\n---")
+
+    return "\n".join(lines), all_triples

@@ -9,7 +9,7 @@ The system is orchestrated using **LangGraph**, providing a cyclic, stateful, mu
 - **Memory**: It utilizes LangGraph's `MemorySaver` checkpointer for thread-based persistent conversation states (e.g., `THREAD_ID = "catprep_session_user_1"`).
 - **Retrieval Augmented Generation (RAG)**: Uses FAISS (`vector_store.py`) to retrieve context from local PDF study materials (`context/` directory).
 - **LLM Routing**: The system utilizes a dynamic `LLM_PROVIDER` loaded via `.env` in `core/config.py`. It supports both local lightweight models (`ChatOllama`) and premium cloud models (`AzureChatOpenAI`) depending on the `llm_provider` variable.
-- **Frontend**: A local web interface built with **NiceGUI** (`main_ui.py`) running on port `8080`.
+- **Frontend**: A local web dashboard built with **Streamlit** (`main_ui.py`) rendering chat and LangGraph execution traces side-by-side.
 
 ## 2. Agent Implementations & Scope
 

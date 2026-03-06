@@ -25,7 +25,7 @@ def practice_node(state: AgentState):
     focus_area = state.get("focus_area")
     search_query = f"{focus_area} {question}" if focus_area else question
 
-    graph_context = retrieve_graph_context(search_query, max_seed_nodes=8, max_triples=25)
+    graph_context, raw_triples = retrieve_graph_context(search_query, max_seed_nodes=8, max_triples=25)
     context_str = graph_context if graph_context else "No context available."
 
     current_questions = state.get("current_questions", "No questions in current session.")
@@ -59,5 +59,6 @@ def practice_node(state: AgentState):
         "messages": [AIMessage(content=generation)],
         "documents": [],
         "current_questions": new_current_questions,
-        "previous_summary": new_previous_summary
+        "previous_summary": new_previous_summary,
+        "active_graph_context": raw_triples
     }

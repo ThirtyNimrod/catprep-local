@@ -220,8 +220,8 @@ async def build_graph_async(chunks: list[dict], llm_with_tools) -> nx.DiGraph:
             logger.error(f"  -> Batch failed permanently: {result}")
             continue
         rels, batch = result
-        # Use source_file from first chunk in the batch as representative
         source_file = batch[0]["metadata"].get("source_file", "unknown")
+        batch_text_combined = "\n...\n".join(c["page_content"] for c in batch)
         for rel in rels:
             G.add_node(rel.source)
             G.add_node(rel.target)
@@ -230,6 +230,7 @@ async def build_graph_async(chunks: list[dict], llm_with_tools) -> nx.DiGraph:
                 rel.target,
                 relation=rel.relation,
                 source_file=source_file,
+                source_text=batch_text_combined,
             )
 
     return G

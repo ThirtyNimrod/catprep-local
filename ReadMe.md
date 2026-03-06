@@ -13,7 +13,7 @@ A comprehensive CAT (Common Admission Test) preparation assistant powered by loc
 ### Optimized for Small Models (4B/7B)
 - Sliding window memory management
 - Compressed conversation summaries
-- Context-aware document retrieval
+- 100% Knowledge Graph-driven retrieval (Graph RAG)
 - Efficient token usage
 
 ### Conversational Persistence
@@ -26,8 +26,8 @@ A comprehensive CAT (Common Admission Test) preparation assistant powered by loc
 ### 1. Document Loading & Knowledge Graph Extraction
 - Scans `context/` folder for CAT prep PDFs
 - Chunks documents into text segments
-- `scripts/build_knowledge_graph.py` builds an entity-relationship graph using LLM extraction
-- Resulting `.graphml` file stored in `data/` for rapid inference retrieval
+- `scripts/build_knowledge_graph.py` extracts entities and embeds the raw text snippets directly onto graph edges (`source_text`)
+- Resulting `.graphml` file stored in `data/` acts as the sole context database (no vector databases used)
 
 ### 2. Query Routing Flow
 ```
@@ -99,11 +99,12 @@ uv pip install -r pyproject.toml
 
 **Package purposes:**
 - `langgraph`: Multi-agent orchestration framework
-- `langchain` & `langchain_community`: Document loaders, embeddings, prompts
+- `langchain` & `langchain_community`: Framework orchestration, parsing, and LLM wrappers
 - `langchain_ollama`: Ollama integration for LangChain
-- `networkx`: Network graph data structure for context retrieval
+- `networkx`: Knowledge Graph structure, traversal, and centrality analysis
 - `pypdf`: PDF document parsing
-- `nicegui`: Frontend web interface framework
+- `streamlit`: Frontend web interface framework
+- `pyvis`: Interactive Knowledge Graph visualization (force-directed, drag/zoom)
 
 ### 3. Prepare Your Documents
 
@@ -135,10 +136,17 @@ LOCAL_LLM_MODEL = "granite4:tiny-h"  # Change to your preferred model
 ### 5. Run the System
 
 ```bash
-python main.py
+python main_ui.py
+# or: streamlit run main_ui.py
 ```
 
-- Launches the **NiceGUI** web interface at `http://localhost:8080`
+- Launches the **Streamlit** dashboard with side-by-side Chat and interactive Knowledge Graph visualization.
+- The Knowledge Graph panel features:
+  - **Graph Stats**: Node count, edge count, and predicate count.
+  - **Triplet Filters**: Filter the graph by Subject, Predicate, or Object.
+  - **Node Search**: Highlight a specific node with a gold border.
+  - **Interactive PyVis Graph**: Force-directed physics layout with drag, zoom, and tooltips.
+  - **Triple Accumulation**: Graph grows across conversation turns, with a Clear button to reset.
 - Instantly loads the knowledge graph from `data/knowledge_graph.graphml`
 - **Note:** The UI can start without Ollama running, but Ollama must be active when sending queries.
 
@@ -233,8 +241,8 @@ Edit the prompt templates in `agents/prompts.py`:
 
 ### Adjust Retrieval
 ```python
-# In agents/specialists/*.py - Change number of documents retrieved
-documents = retrieve_documents(question, k=5)  # Increase k for more context
+# In core/knowledge_graph.py - Change traversal limits
+def retrieve_graph_context(query, max_seed_nodes=10, max_triples=30, hops=2)
 ```
 
 ### Modify Memory Limits
@@ -277,7 +285,7 @@ exit_keywords = ["bye", "exit", "quit", "thanks", "thank you", "done", "cancel"]
 - **Cause**: Retrieval not finding right documents
 - **Solution**:
   1. Be more specific (e.g., "QA number systems questions")
-  2. Increase `k` value in similarity_search
+  2. Check if the graph builder successfully captured those topics
   3. Organize PDFs by topic
 
 ## 📚 Extending the System
@@ -407,8 +415,9 @@ Built with:
 - [Ollama](https://ollama.ai) - Local LLM runtime
 - [LangChain](https://langchain.com) - LLM application framework
 - [LangGraph](https://langchain-ai.github.io/langgraph/) - Agent orchestration
-- [NetworkX](https://networkx.org/) - Knowledge Graph structure
-- [NiceGUI](https://nicegui.io/) - Web UI Framework
+- [NetworkX](https://networkx.org/) - Knowledge Graph structure & centrality
+- [PyVis](https://pyvis.readthedocs.io/) - Interactive graph visualization
+- [Streamlit](https://streamlit.io/) - Web UI Framework
 
 ---
 

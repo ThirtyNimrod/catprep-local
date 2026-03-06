@@ -26,7 +26,7 @@ def feedback_node(state: AgentState):
     search_query = f"{' '.join(weak_areas)} {question}" if weak_areas else question
 
     mock_analysis = state.get("mock_test_analysis", "No mock test analyzed yet.")
-    graph_context = retrieve_graph_context(search_query, max_seed_nodes=10, max_triples=30)
+    graph_context, raw_triples = retrieve_graph_context(search_query, max_seed_nodes=10, max_triples=30)
     context_str = graph_context if graph_context else "No context available."
 
     history_str = format_conversation_history(messages, max_turns=3)
@@ -59,5 +59,6 @@ def feedback_node(state: AgentState):
         "messages": [AIMessage(content=generation)],
         "documents": [],
         "weak_areas": new_weak_areas,
-        "mock_test_analysis": new_mock_analysis
+        "mock_test_analysis": new_mock_analysis,
+        "active_graph_context": raw_triples
     }
