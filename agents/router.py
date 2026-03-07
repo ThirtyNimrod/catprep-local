@@ -16,7 +16,7 @@ def router_node(state: AgentState):
     
     question = messages[-1].content
     
-    llm = get_llm(temperature=0)
+    llm = get_llm(temperature=0, caller_name="router_agent")
     prompt = PromptTemplate(template=ROUTER_PROMPT, input_variables=["question"])
     chain = prompt | llm | StrOutputParser()
     

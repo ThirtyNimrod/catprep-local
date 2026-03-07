@@ -7,8 +7,14 @@ from core.config import (
     AZURE_OPENAI_CHAT_DEPLOYMENT_NAME
 )
 
-def get_llm(temperature: float = 0.3):
+from core.token_tracker import TokenUsageCallbackHandler
+
+def get_llm(temperature: float = 0.3, caller_name: str | None = None):
     provider = LLM_PROVIDER.lower().replace("_", "").replace("-", "")
+    
+    callbacks = []
+    if caller_name:
+        callbacks.append(TokenUsageCallbackHandler(caller_name))
 
     if provider in {"azureopenai", "azure"}:
         missing = []
@@ -33,10 +39,21 @@ def get_llm(temperature: float = 0.3):
             openai_api_version=AZURE_OPENAI_API_VERSION,
             azure_deployment=AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
             api_key=AZURE_OPENAI_API_KEY,
-            temperature=temperature
+            temperature=temperature,
+            callbacks=callbacks
         )
 
     from langchain_ollama import ChatOllama
 
+    # Determine context window for Ollama
+    # 16k is a safe default for modern local models (like Mistral, Qwen, etc)
+    # without blowing up the VRAM like 128k does.
+    num_ctx = 16384 
+
     # Default to Ollama
-    return ChatOllama(model=LOCAL_LLM_MODEL, temperature=temperature)
+    return ChatOllama(
+        model=LOCAL_LLM_MODEL, 
+        temperature=temperature,
+        callbacks=callbacks,
+        num_ctx=num_ctx
+    )

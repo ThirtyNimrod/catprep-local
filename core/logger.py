@@ -23,6 +23,7 @@ def get_logger(
     name: str,
     level: int = logging.INFO,
     log_file: Path | None = None,
+    mode: str = "a"
 ) -> logging.Logger:
     """
     Returns a configured logger with the given name.
@@ -34,6 +35,8 @@ def get_logger(
     log_file : Path to the output log file. Defaults to logs/app.log.
                Pass an explicit path to write to a separate file
                (e.g. logs/build_knowledge_graph.log).
+    mode     : File mode for the log file ('a' for append, 'w' for overwrite).
+               Defaults to 'a'.
     """
     logger = logging.getLogger(name)
 
@@ -43,7 +46,7 @@ def get_logger(
         target_file = log_file if log_file is not None else DEFAULT_LOG_FILE
 
         # File Handler
-        file_handler = logging.FileHandler(target_file, encoding="utf-8")
+        file_handler = logging.FileHandler(target_file, mode=mode, encoding="utf-8")
         file_handler.setFormatter(FORMATTER)
 
         # Console Handler

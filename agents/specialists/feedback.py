@@ -32,7 +32,7 @@ def feedback_node(state: AgentState):
     history_str = format_conversation_history(messages, max_turns=3)
     weak_areas_str = ", ".join(weak_areas) if weak_areas else "Not yet identified."
     
-    llm = get_llm(temperature=0.3)
+    llm = get_llm(temperature=0.3, caller_name="feedback_agent")
     prompt = PromptTemplate(
         template=FEEDBACK_PROMPT,
         input_variables=["question", "context", "history", "mock_analysis", "weak_areas"]

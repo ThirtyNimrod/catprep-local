@@ -10,7 +10,7 @@ A comprehensive CAT (Common Admission Test) preparation assistant powered by loc
 - **Practice Questions Agent**: Generates targeted practice questions with answer keys
 - **Feedback/Review Agent**: Analyzes mock tests and provides actionable improvement strategies
 
-### Optimized for Small Models (4B/7B)
+### Optimized for 8B+ Models
 - Sliding window memory management
 - Compressed conversation summaries
 - 100% Knowledge Graph-driven retrieval (Graph RAG)
@@ -81,11 +81,11 @@ Back to Router
 **Pull a Model**
 ```bash
 # Recommended for testing
-ollama pull granite4:tiny-h  # 4B model (faster, less memory)
+ollama pull llama3.1:8b    # 8B model (balanced speed/quality)
 
 # Alternative options
-ollama pull llama3:7b        # 7B model (better quality)
-ollama pull mistral:7b       # 7B alternative
+ollama pull mistral:latest  # Recent 7B-8B class model
+ollama pull llama3:8b       # Standard 8B model
 ```
 
 ### 2. Install Python Dependencies
@@ -130,7 +130,7 @@ python scripts/build_knowledge_graph.py
 
 Edit `core/config.py`:
 ```python
-LOCAL_LLM_MODEL = "granite4:tiny-h"  # Change to your preferred model
+LOCAL_LLM_MODEL = "llama3.1:8b"  # Change to your preferred model
 ```
 
 ### 5. Run the System
@@ -206,7 +206,7 @@ Agent: [Exits back to main menu]
 - **`quit`**: Exit the entire system (only works at main menu)
 - **`bye`/`exit`/`thanks`**: Exit current agent and return to main menu
 
-## 🧠 Memory Management (4B/7B Optimization)
+## 🧠 Memory Management (8B+ Optimization)
 
 ### Sliding Window Approach
 - **Last 2-3 exchanges**: Kept in full detail
@@ -214,8 +214,7 @@ Agent: [Exits back to main menu]
 - **Current questions**: Always preserved for answer key requests
 
 ### Why This Matters
-- 4B models: ~4K-8K context window
-- 7B models: ~8K-32K context window
+- 8B+ models: ~16K-32K+ context window recommended
 - Long conversations would overflow context
 - Compression maintains continuity without memory issues
 
@@ -274,12 +273,7 @@ exit_keywords = ["bye", "exit", "quit", "thanks", "thank you", "done", "cancel"]
   2. Use `rebuild` command to re-index
   3. Try rephrasing your question
 
-### Memory/context errors with 4B model
-- **Cause**: Conversation too long for context window
-- **Solution**:
-  1. Exit agent and start fresh (`bye`)
-  2. Reduce `max_turns` in `format_conversation_history()`
-  3. Use a 7B model instead
+  3. Ensure you are using an 8B class model or larger
 
 ### Questions don't match my request
 - **Cause**: Retrieval not finding right documents

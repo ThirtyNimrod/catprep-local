@@ -32,7 +32,7 @@ def practice_node(state: AgentState):
     previous_summary = state.get("previous_summary", "")
     history_str = format_conversation_history(messages, max_turns=2)
     
-    llm = get_llm(temperature=0.3)
+    llm = get_llm(temperature=0.3, caller_name="practice_agent")
     prompt = PromptTemplate(
         template=PRACTICE_QUESTIONS_PROMPT,
         input_variables=["question", "context", "history", "current_questions", "previous_summary"]

@@ -15,7 +15,7 @@ from langgraph.graph import StateGraph, END
 # --- Configuration ---
 CONTEXT_DIR = "context"
 VECTORSTORE_PATH = "chroma_db"
-LOCAL_LLM_MODEL = "granite4:tiny-h"
+LOCAL_LLM_MODEL = "llama3.1:8b"
 
 # ============================================================
 # STATE DEFINITIONS
@@ -58,7 +58,7 @@ class FeedbackState(TypedDict):
     should_exit: bool
 
 # ============================================================
-# PROMPTS - OPTIMIZED FOR 4B/7B MODELS
+# PROMPTS - OPTIMIZED FOR 8B+ MODELS
 # ============================================================
 
 ROUTER_PROMPT = """You are a routing assistant for a CAT exam prep system.
@@ -196,8 +196,8 @@ def setup_vector_store(force_rebuild: bool = False):
     
     # Split with metadata preservation
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,  # Smaller chunks for 4B model
-        chunk_overlap=150
+        chunk_size=1200,  # Larger chunks for 8B+ model
+        chunk_overlap=200
     )
     splits = text_splitter.split_documents(docs)
     print(f"Split into {len(splits)} chunks.")
@@ -352,7 +352,7 @@ def practice_generate(state: PracticeQuestionsState):
     previous_summary = state.get("previous_summary", "")
     
     context_str = "\n\n---\n\n".join(documents) if documents else "No context available."
-    history_str = format_conversation_history(history, max_turns=2)  # Only last 2 turns for 4B model
+    history_str = format_conversation_history(history, max_turns=3)  # Increased history for 8B+ model
     
     llm = ChatOllama(model=LOCAL_LLM_MODEL, temperature=0.3)
     prompt = PromptTemplate(

@@ -5,7 +5,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from agents.graph import build_graph
 from core.logger import get_logger
 
-logger = get_logger("main")
+logger = get_logger("main", mode="w")
 
 # ---------------------------------------------------------------------------
 # Application Initialization

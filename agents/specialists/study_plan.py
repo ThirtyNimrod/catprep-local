@@ -26,7 +26,7 @@ def study_plan_node(state: AgentState):
     context_str = graph_context if graph_context else "No specific context available."
     history_str = format_conversation_history(messages)
     
-    llm = get_llm(temperature=0.3)
+    llm = get_llm(temperature=0.3, caller_name="study_plan_agent")
     prompt = PromptTemplate(
         template=STUDY_PLAN_PROMPT,
         input_variables=["question", "context", "history"]

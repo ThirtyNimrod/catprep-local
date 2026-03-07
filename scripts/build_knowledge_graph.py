@@ -12,13 +12,14 @@ project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
 from core.logger import get_logger, LOGS_DIR
-from core.config import CONTEXT_DIR
+from core.config import CONTEXT_DIR, get_processing_config
 from core.llm import get_llm
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = get_logger(
     "build_knowledge_graph",
-    log_file=LOGS_DIR / "build_knowledge_graph.log"
+    log_file=LOGS_DIR / "build_knowledge_graph.log",
+    mode="w"
 )
 
 # --- Configuration ---
@@ -26,12 +27,15 @@ CONTEXT_DIR_PATH = Path(CONTEXT_DIR)
 DATA_DIR = project_root / "data"
 DATA_DIR.mkdir(exist_ok=True)
 GRAPH_OUTPUT_FILE = DATA_DIR / "knowledge_graph.graphml"
-CHUNK_SIZE = 2500
-CHUNK_OVERLAP = 150
-MAX_CONCURRENT = 6          # asyncio semaphore limit
-BATCH_SIZE = 8              # chunks per LLM call
-BATCH_FALLBACK = 5          # fallback if batch text is too large
-MAX_BATCH_CHARS = 18000     # threshold to trigger fallback
+
+# Load dynamic processing config based on LLM tier
+processing_config = get_processing_config()
+CHUNK_SIZE = processing_config["CHUNK_SIZE"]
+CHUNK_OVERLAP = processing_config["CHUNK_OVERLAP"]
+MAX_CONCURRENT = processing_config["MAX_CONCURRENT"]
+BATCH_SIZE = processing_config["BATCH_SIZE"]
+BATCH_FALLBACK = processing_config["BATCH_FALLBACK"]
+MAX_BATCH_CHARS = processing_config["MAX_BATCH_CHARS"]
 
 # --- System prompt (tight, token-efficient) ---
 EXTRACTION_PROMPT = """You are a knowledge graph extractor for exam-preparation material.
@@ -243,7 +247,7 @@ async def async_main():
 
     # 1. Setup LLM
     logger.info("Initializing LLM from core.llm...")
-    llm = get_llm(temperature=0.0)
+    llm = get_llm(temperature=0.0, caller_name="build_knowledge_graph")
 
     try:
         llm_with_tools = llm.with_structured_output(

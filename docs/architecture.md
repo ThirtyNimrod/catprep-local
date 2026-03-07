@@ -40,5 +40,5 @@ The system is orchestrated using **LangGraph**, providing a cyclic, stateful, mu
   - Defaults to analyzing crucial CAT domains (e.g., "QA", "VA/RC") if weak areas aren't explicitly provided but the user asks for weakness analysis.
 
 ## 3. Current Scope & Limitations
-- **Hybrid Execution Environment**: The system is heavily optimized for token compression and local execution on 4B/7B models via Ollama. It also transparently supports high-capacity models via Azure OpenAI, which can be toggled using the `llm_provider` environment variable in the `.env` file.
+- **Hybrid Execution Environment**: The system is heavily optimized for token compression and local execution on 8B+ models via Ollama. It also transparently supports high-capacity models via Azure OpenAI, which can be toggled using the `llm_provider` environment variable in the `.env` file.
 - **Vector-Only Relations**: Currently, semantic search is limited to flat dense vector retrieval (FAISS). Complex multi-hop reasoning (e.g., connecting a user's failure in "Logarithms" to a prerequisite weakness in "Exponents") is heavily dependent on the LLM's intrinsic knowledge rather than a structured knowledge base.
