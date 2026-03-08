@@ -18,7 +18,7 @@ from pyvis.network import Network
 # Color palette for node types (auto-assigned by hash when type is unknown)
 # ---------------------------------------------------------------------------
 _PALETTE = [
-    "#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+    "#2563EB", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
     "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#14B8A6",
 ]
 
@@ -34,7 +34,7 @@ def _color_for_type(node_type: str) -> str:
 
 def build_pyvis_html(
     triples: list[tuple[str, str, str]],
-    highlight_node: Optional[str] = None,
+    highlight_nodes: Optional[list[str]] = None,
     height: str = "560px",
     dark_mode: bool = False,
 ) -> str:
@@ -42,7 +42,7 @@ def build_pyvis_html(
 
     Args:
         triples: List of (subject, predicate, object) tuples.
-        highlight_node: Optional node ID to highlight (larger + ring).
+        highlight_nodes: Optional list of node IDs to highlight (larger + golden ring).
         height: CSS height for the canvas.
         dark_mode: If True, use a dark background.
 
@@ -60,6 +60,7 @@ def build_pyvis_html(
         directed=True,
         notebook=False,
         cdn_resources="remote",
+        filter_menu=True,  # Enables built-in filtering
     )
 
     # Barnes-Hut physics for nice force-directed layout
@@ -90,9 +91,12 @@ def build_pyvis_html(
             size = max(12, int(centrality * 80) + 12)
             color = _color_for_type(node_id)
 
-            is_highlight = highlight_node and node_id == highlight_node
+            is_highlight = highlight_nodes and node_id in highlight_nodes
             border_width = 4 if is_highlight else 1
             border_color = "#FFD700" if is_highlight else color
+            # Bump size slightly if highlighted
+            if is_highlight:
+                size += 5
 
             net.add_node(
                 node_id,
@@ -102,10 +106,12 @@ def build_pyvis_html(
                     "background": color,
                     "border": border_color,
                     "highlight": {"background": "#FFD700", "border": "#FFD700"},
+                    "hover": {"background": "#FCD34D", "border": "#FCD34D"}
                 },
                 borderWidth=border_width,
                 title=f"<b>{node_id}</b><br>Connections: {G.degree(node_id)}",
-                font={"size": 11, "color": font_color},
+                font={"size": 14, "color": font_color, "face": "Graphik, sans-serif"},
+                shadow=True
             )
 
     # --- Add edges ---

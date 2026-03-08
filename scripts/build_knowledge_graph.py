@@ -42,10 +42,11 @@ EXTRACTION_PROMPT = """You are a knowledge graph extractor for exam-preparation 
 Extract (source, target, relation) triples from EVERY chunk below.
 
 Rules:
-- Entities: named concepts, formulas, people, topics, sections, question IDs.
-- Relations: short verbs or phrases ("is_a", "has", "tests", "requires", "sits_next_to", "scored").
-- Skip generic words like "the text", "this passage", "option A/B/C/D" as entities.
-- Keep answer-key references (e.g., "Q5 -> Answer -> B").
+- Focus on Subject Matter: Extract actual concepts, formulas, people, topics, and domain entities.
+- EXCLUDE Exam Structure: Do NOT create nodes for generic exam terms like "Option A", "Option B", "Answer", "Numbers", "Options", "Question", "the text", or "passage". 
+- EXCLUDE Hub Nodes: Do NOT link questions to common option/answer nodes (e.g. "Answer B") - this creates meaningless connections between unrelated topics.
+- Question IDs are allowed ONLY if linked to actual subject concepts (e.g., "Q.1" -> "tests" -> "Special relativity"). Do not use "Option" or "Number" as a target.
+- Relations: Use short, descriptive phrases ("is_a", "has_property", "tests", "requires_formula", "defined_as").
 - Max 10 relationships per chunk. Prefer quality over quantity.
 - Return an empty list if no meaningful relationships exist in a chunk."""
 

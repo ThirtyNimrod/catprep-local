@@ -215,3 +215,36 @@ def retrieve_graph_context(
             lines.append(f"---\n{text.strip()}\n---")
 
     return "\n".join(lines), all_triples
+
+def get_base_graph_triples(max_triples: int = 150) -> list[tuple]:
+    """
+    Returns a default base subset of the Knowledge Graph for the UI.
+    Finds the most central nodes and returns their immediate triples.
+    """
+    G = _load_graph()
+    if G is None:
+        return []
+
+    # Get nodes sorted by highest degree centrality
+    deg_cent = nx.degree_centrality(G)
+    central_nodes = sorted(deg_cent.items(), key=lambda x: x[1], reverse=True)
+    
+    # We only need enough seeds to generate our subset.
+    seed_nodes = [node for node, _ in central_nodes[:20]] 
+    
+    all_triples: list[tuple] = []
+    seen_triples = set()
+    
+    for node in seed_nodes:
+        # Just grab 1 hop to maintain a dense visual cluster
+        for src, rel, tgt, text in _triples_from_node(G, node, hops=1):
+            trip = (src, rel, tgt)
+            if trip not in seen_triples:
+                seen_triples.add(trip)
+                all_triples.append(trip)
+            if len(all_triples) >= max_triples:
+                break
+        if len(all_triples) >= max_triples:
+            break
+            
+    return all_triples
