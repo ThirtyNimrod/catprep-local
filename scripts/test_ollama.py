@@ -12,7 +12,7 @@ from core.logger import get_logger
 logger = get_logger("test_ollama")
 
 def test_connection():
-    print(f"--- Ollama Connection Test ---")
+    print("--- Ollama Connection Test ---")
     print(f"Provider: {LLM_PROVIDER}")
     print(f"Model: {LOCAL_LLM_MODEL}")
     
@@ -29,7 +29,7 @@ def test_connection():
         print("\nCheck 'logs/token_usage.log' to see if tokens were recorded correctly.")
         
     except Exception as e:
-        print(f"\n[FAILURE] Error occurred:")
+        print("\n[FAILURE] Error occurred:")
         print(str(e))
         
         if "500" in str(e) and "memory" in str(e).lower():

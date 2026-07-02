@@ -1,6 +1,7 @@
 from core.config import (
     LLM_PROVIDER, 
-    LOCAL_LLM_MODEL, 
+    LOCAL_LLM_MODEL,
+    LLAMA_CPP_MODEL_PATH,
     AZURE_OPENAI_API_KEY, 
     AZURE_OPENAI_ENDPOINT, 
     AZURE_OPENAI_API_VERSION,
@@ -40,6 +41,21 @@ def get_llm(temperature: float = 0.3, caller_name: str | None = None):
             azure_deployment=AZURE_OPENAI_CHAT_DEPLOYMENT_NAME,
             api_key=AZURE_OPENAI_API_KEY,
             temperature=temperature,
+            callbacks=callbacks
+        )
+
+    if provider in {"llamacpp", "llama.cpp", "llama-cpp"}:
+        if not LLAMA_CPP_MODEL_PATH:
+            raise ValueError("LLAMA_CPP_MODEL_PATH is missing. Please set it in .env")
+
+        from langchain_community.chat_models import ChatLlamaCpp
+        
+        n_ctx = 16384 
+
+        return ChatLlamaCpp(
+            model_path=LLAMA_CPP_MODEL_PATH,
+            temperature=temperature,
+            n_ctx=n_ctx,
             callbacks=callbacks
         )
 

@@ -41,6 +41,5 @@ def study_plan_node(state: AgentState):
     
     return {
         "messages": [AIMessage(content=generation)],
-        "documents": [],
         "active_graph_context": raw_triples
     }

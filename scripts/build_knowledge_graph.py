@@ -1,4 +1,3 @@
-import os
 import re
 import asyncio
 from pathlib import Path
@@ -14,12 +13,14 @@ sys.path.append(str(project_root))
 from core.logger import get_logger, LOGS_DIR
 from core.config import CONTEXT_DIR, get_processing_config
 from core.llm import get_llm
+from core.graph_utils import normalize_entity_name
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = get_logger(
     "build_knowledge_graph",
     log_file=LOGS_DIR / "build_knowledge_graph.log",
-    mode="w"
+    mode="a"
 )
 
 # --- Configuration ---
@@ -67,17 +68,13 @@ class ExtractedGraphData(BaseModel):
 
 # --- Helpers ---
 def chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
-    """Simple character-based chunking with overlap."""
-    chunks = []
-    start = 0
-    text_len = len(text)
-    while start < text_len:
-        end = min(start + chunk_size, text_len)
-        chunks.append(text[start:end])
-        if end == text_len:
-            break
-        start += chunk_size - chunk_overlap
-    return chunks
+    """Character-based chunking with overlap using langchain."""
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        separators=["\n\n", "\n", " ", ""]
+    )
+    return splitter.split_text(text)
 
 
 # Regex patterns that indicate instruction-only content
@@ -195,6 +192,37 @@ def _create_batches(chunks: list[dict], batch_size: int, fallback_size: int, max
     return batches
 
 
+def add_relationships_to_graph(G, rels, canonical_map, seen_edges, source_file, source_text):
+    for rel in rels:
+        src_canon = normalize_entity_name(rel.source)
+        tgt_canon = normalize_entity_name(rel.target)
+
+        if not src_canon or not tgt_canon:
+            continue
+
+        if src_canon not in canonical_map:
+            canonical_map[src_canon] = rel.source
+        if tgt_canon not in canonical_map:
+            canonical_map[tgt_canon] = rel.target
+
+        display_src = canonical_map[src_canon]
+        display_tgt = canonical_map[tgt_canon]
+
+        edge_key = (src_canon, tgt_canon, rel.relation.lower())
+        if edge_key in seen_edges:
+            continue
+        seen_edges.add(edge_key)
+
+        G.add_node(display_src)
+        G.add_node(display_tgt)
+        G.add_edge(
+            display_src,
+            display_tgt,
+            relation=rel.relation,
+            source_file=source_file,
+            source_text=source_text,
+        )
+
 async def build_graph_async(chunks: list[dict], llm_with_tools) -> nx.DiGraph:
     """Build the networkx graph using batched, concurrent LLM extraction."""
     G = nx.DiGraph()
@@ -202,6 +230,9 @@ async def build_graph_async(chunks: list[dict], llm_with_tools) -> nx.DiGraph:
     batches = _create_batches(chunks, BATCH_SIZE, BATCH_FALLBACK, MAX_BATCH_CHARS)
     total_batches = len(batches)
     completed = 0
+
+    canonical_map = {}
+    seen_edges = set()
 
     logger.info(f"Created {total_batches} batches from {len(chunks)} chunks "
                 f"(batch_size={BATCH_SIZE}, fallback={BATCH_FALLBACK})")
@@ -226,16 +257,7 @@ async def build_graph_async(chunks: list[dict], llm_with_tools) -> nx.DiGraph:
         rels, batch = result
         source_file = batch[0]["metadata"].get("source_file", "unknown")
         batch_text_combined = "\n...\n".join(c["page_content"] for c in batch)
-        for rel in rels:
-            G.add_node(rel.source)
-            G.add_node(rel.target)
-            G.add_edge(
-                rel.source,
-                rel.target,
-                relation=rel.relation,
-                source_file=source_file,
-                source_text=batch_text_combined,
-            )
+        add_relationships_to_graph(G, rels, canonical_map, seen_edges, source_file, batch_text_combined)
 
     return G
 

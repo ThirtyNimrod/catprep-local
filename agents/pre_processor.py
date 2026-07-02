@@ -1,5 +1,4 @@
 import os
-import glob
 import json
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter

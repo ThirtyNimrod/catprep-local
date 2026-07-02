@@ -1,0 +1,8 @@
+# Optional: install these for the LlamaCPP provider (LLM_PROVIDER=LlamaCPP).
+# Kept out of requirements.txt because llama-cpp-python is a large compiled
+# dependency with its own wheel index, and the default Ollama/Azure setup
+# (and CI) don't need it.
+#
+# pip install -r requirements.txt -r requirements-llamacpp.txt
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python

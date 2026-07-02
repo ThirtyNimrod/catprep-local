@@ -57,7 +57,6 @@ def practice_node(state: AgentState):
     
     return {
         "messages": [AIMessage(content=generation)],
-        "documents": [],
         "current_questions": new_current_questions,
         "previous_summary": new_previous_summary,
         "active_graph_context": raw_triples

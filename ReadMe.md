@@ -1,6 +1,7 @@
-# Multi-Agent CAT Prep System with Ollama & LangGraph
+# Offline Multi-Agent GraphRAG System
+### CAT Exam Prep — a worked example
 
-A comprehensive CAT (Common Admission Test) preparation assistant powered by local LLMs through Ollama, featuring specialized agents for study planning, practice questions, and performance feedback.
+A fully offline, multi-agent GraphRAG system built with **LangGraph** and a **NetworkX** knowledge graph, running entirely on local LLMs via **Ollama** (with a drop-in **Azure OpenAI** path for cloud-scale extraction/inference). This repo demonstrates the architecture end-to-end through a concrete application: a CAT (Common Admission Test) preparation assistant with specialized agents for study planning, practice questions, and performance feedback.
 
 ## 🎯 Features
 
@@ -128,16 +129,29 @@ python scripts/build_knowledge_graph.py
 
 ### 4. Configure the Model (Optional)
 
-Edit `core/config.py`:
-```python
-LOCAL_LLM_MODEL = "llama3.1:8b"  # Change to your preferred model
+Edit `.env` (copied from `.env.example`):
+```bash
+llm_provider=Ollama          # Options: Ollama, AzureOpenAI, LlamaCPP
+OLLAMA_MODEL_NAME=llama3.2:latest
 ```
+
+**Optional: run against a local GGUF model via LlamaCPP** instead of Ollama:
+```bash
+pip install -r requirements-llamacpp.txt   # pulls in llama-cpp-python (not in the default install)
+```
+```bash
+llm_provider=LlamaCPP
+LLAMA_CPP_MODEL_PATH=/path/to/your/model.gguf
+```
+This is a heavier, CPU-bound path — expect much slower inference than Ollama unless you build
+`llama-cpp-python` with GPU (CUDA) support.
 
 ### 5. Run the System
 
 ```bash
-python main_ui.py
-# or: streamlit run main_ui.py
+streamlit run streamlit_ui.py
+# or, since streamlit_ui.py self-launches:
+python streamlit_ui.py
 ```
 
 - Launches the **Streamlit** dashboard with side-by-side Chat and interactive Knowledge Graph visualization.
@@ -153,6 +167,7 @@ python main_ui.py
 ### 6. Logs & Debugging
 - Main application logs: `logs/app.log`
 - Graph builder logs: `logs/build_knowledge_graph.log`
+- Token usage logs: `logs/token_usage.log` (summarize with `python scripts/summarize_tokens.py`)
 
 ## 💬 Usage Examples
 
@@ -371,6 +386,18 @@ NEW_AGENT_PROMPT = """Your custom prompt here..."""
 # 4. Build graph
 # 5. Add routing logic in ROUTER_PROMPT
 ```
+
+## 🧪 Development & Testing
+
+```bash
+pip install -r requirements-dev.txt   # pytest + ruff
+pytest -q                             # unit tests — no Ollama/network required
+ruff check .                          # lint
+```
+
+CI (`.github/workflows/ci.yml`) runs both on every push/PR to `main`. `tests/test_models.py` is a
+manual, real-model smoke test (Ollama/LlamaCPP) and is intentionally skipped under `pytest` — run it
+directly with `python tests/test_models.py` when you want to sanity-check a live model connection.
 
 ## 🔒 Important Notes
 

@@ -22,6 +22,7 @@ VECTORSTORE_PATH = os.getenv("VECTORSTORE_PATH", str(PROJECT_ROOT / "faiss_db"))
 # LLM Configurations
 LLM_PROVIDER = _clean_env(os.getenv("llm_provider") or os.getenv("LLM_PROVIDER"), "Ollama")
 LOCAL_LLM_MODEL = _clean_env(os.getenv("OLLAMA_MODEL_NAME"), "llama3.1:8b")
+LLAMA_CPP_MODEL_PATH = _clean_env(os.getenv("LLAMA_CPP_MODEL_PATH"), "")
 
 # Configuration Tiers based on context size
 GRAPH_PROCESSING_CONFIG = {

@@ -4,6 +4,7 @@ from core.state import AgentState
 from core.llm import get_llm
 from agents.prompts import ROUTER_PROMPT
 from core.logger import get_logger
+from core.slot_filling import extract_timeframe, extract_focus_area
 
 logger = get_logger("router")
 
@@ -12,7 +13,7 @@ def router_node(state: AgentState):
     logger.info("---ROUTER AGENT---")
     messages = state.get("messages", [])
     if not messages:
-        return {"active_agent": "unknown"}
+        return {"active_agent": "unknown", "active_graph_context": []}
     
     question = messages[-1].content
     
@@ -26,4 +27,17 @@ def router_node(state: AgentState):
     valid_routes = ["study_plan", "practice", "feedback", "unknown"]
     next_agent = result if result in valid_routes else "unknown"
     
-    return {"active_agent": next_agent}
+    updates = {"active_agent": next_agent}
+    
+    if next_agent == "unknown":
+        updates["active_graph_context"] = []
+        
+    timeframe = extract_timeframe(question)
+    if timeframe:
+        updates["timeframe"] = timeframe
+        
+    focus_area = extract_focus_area(question)
+    if focus_area:
+        updates["focus_area"] = focus_area
+        
+    return updates

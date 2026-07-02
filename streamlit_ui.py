@@ -22,7 +22,6 @@ from utils.kg_visualizer import (
     get_unique_values,
 )
 import streamlit.components.v1 as components
-import os
 
 # --- Page Config ---
 st.set_page_config(page_title="CAT Prep Assistant", layout="wide", page_icon="🐱")
@@ -57,6 +56,17 @@ st.markdown("""
 st.markdown('<div class="title-text">CAT Prep Assistant 📚</div>', unsafe_allow_html=True)
 
 # --- Layout: Two Columns (KG left, Chat right) ---
+with st.sidebar:
+    with st.expander("📊 Token Usage", expanded=False):
+        from core.token_summary import parse_token_log
+        stats = parse_token_log()
+        if stats:
+            import pandas as pd
+            df = pd.DataFrame.from_dict(stats, orient="index")
+            st.dataframe(df)
+        else:
+            st.write("No usage recorded yet.")
+
 col_graph, col_chat = st.columns([1, 1.2])
 
 with col_chat:

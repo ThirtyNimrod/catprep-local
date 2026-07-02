@@ -57,7 +57,6 @@ def feedback_node(state: AgentState):
         
     return {
         "messages": [AIMessage(content=generation)],
-        "documents": [],
         "weak_areas": new_weak_areas,
         "mock_test_analysis": new_mock_analysis,
         "active_graph_context": raw_triples

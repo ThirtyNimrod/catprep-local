@@ -9,9 +9,9 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "catprep-local"
+name = "offline-multi-agent-graphrag-system"
 version = "0.1.0"
-description = "Multi-Agent CAT Prep System with Ollama & LangGraph"
+description = "Fully offline multi-agent system with GraphRAG-style retrieval (LangGraph + NetworkX), built on Ollama — demonstrated via a CAT exam-prep assistant. Swappable to Azure OpenAI."
 readme = "ReadMe.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -22,7 +22,6 @@ dependencies = [
     "langchain-ollama==1.0.1",
     "langchain-text-splitters==1.0.0",
     "pypdf==6.1.3",
-    "nicegui==3.8.0",    
     "streamlit==1.42.0",
     "streamlit-agraph==0.0.45",
     "networkx==3.6.1",
@@ -30,3 +29,26 @@ dependencies = [
     "tenacity==9.1.4",
     "python-dotenv==1.2.2"
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff"
+]
+# See requirements-llamacpp.txt — llama-cpp-python needs a separate
+# --extra-index-url (https://abetlen.github.io/llama-cpp-python/whl/cpu)
+# that pip's dependency-list syntax can't express here.
+llamacpp = [
+    "llama-cpp-python"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+ignore = ["E402", "E701"]

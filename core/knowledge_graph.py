@@ -19,8 +19,8 @@ from pathlib import Path
 
 import networkx as nx
 
-from core.config import CONTEXT_DIR
 from core.logger import get_logger
+from core.graph_embeddings import get_node_embeddings, embed_query, cosine_similarity
 
 logger = get_logger("knowledge_graph")
 
@@ -85,13 +85,19 @@ def _load_graph() -> nx.DiGraph | None:
 def _extract_keywords(query: str) -> list[str]:
     """Return cleaned, lower-cased tokens from the query (≥3 chars, not stop words)."""
     tokens = re.findall(r"[a-zA-Z0-9/]+", query.lower())
-    return [t for t in tokens if len(t) >= 3 and t not in _STOP_WORDS]
+    result = []
+    for t in tokens:
+        if t in _STOP_WORDS:
+            continue
+        if len(t) >= 3 or (len(t) == 2 and any(c.isdigit() for c in t)):
+            result.append(t)
+    return result
 
 
 def _node_matches_keyword(node_label: str, keywords: list[str]) -> bool:
-    """True if any keyword is a substring of the node label (case-insensitive)."""
-    label_lower = node_label.lower()
-    return any(kw in label_lower for kw in keywords)
+    """True if any keyword is a token in the node label."""
+    label_tokens = set(re.findall(r"[a-zA-Z0-9/]+", node_label.lower()))
+    return any(kw in label_tokens for kw in keywords)
 
 
 def _triples_from_node(G: nx.DiGraph, node: str, hops: int = 2) -> list[tuple]:
@@ -135,6 +141,8 @@ def retrieve_graph_context(
     max_seed_nodes: int = 8,
     max_triples: int = 25,
     hops: int = 2,
+    graph: nx.DiGraph | None = None,
+    use_embeddings: bool = True
 ) -> tuple[str, list[tuple]]:
     """
     Return a formatted string of knowledge-graph triples relevant to `query`,
@@ -151,21 +159,38 @@ def retrieve_graph_context(
     -------
     A tuple (context_string, raw_triples).
     """
-    G = _load_graph()
+    G = graph if graph is not None else _load_graph()
     if G is None:
         return "", []
 
-    keywords = _extract_keywords(query)
     seed_nodes = []
+    
+    if use_embeddings:
+        query_emb = embed_query(query)
+        node_embs = get_node_embeddings(G)
+        
+        if query_emb and node_embs:
+            similarities = []
+            for node, emb in node_embs.items():
+                sim = cosine_similarity(query_emb, emb)
+                if sim >= 0.3:
+                    similarities.append((node, sim))
+            
+            similarities.sort(key=lambda x: x[1], reverse=True)
+            seed_nodes = [node for node, sim in similarities[:max_seed_nodes]]
 
-    if keywords:
-        # Find seed nodes whose labels match any keyword
-        for node in G.nodes:
-            label = G.nodes[node].get("label", node)
-            if _node_matches_keyword(str(label), keywords):
-                seed_nodes.append(node)
-            if len(seed_nodes) >= max_seed_nodes:
-                break
+    # Fallback to keywords if embeddings didn't yield enough
+    if len(seed_nodes) < max_seed_nodes:
+        keywords = _extract_keywords(query)
+        if keywords:
+            for node in G.nodes:
+                if node in seed_nodes:
+                    continue
+                label = G.nodes[node].get("label", node)
+                if _node_matches_keyword(str(label), keywords):
+                    seed_nodes.append(node)
+                if len(seed_nodes) >= max_seed_nodes:
+                    break
 
     # FALLBACK: If query is generic (no keywords matched), pick central nodes
     if not seed_nodes:
